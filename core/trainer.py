@@ -103,7 +103,7 @@ def test(model, test_input_handle, configs, itr):
 
             psnr[i] += metrics.batch_psnr(pred_frm, real_frm)
             for b in range(configs.batch_size):
-                score, _ = compare_ssim(pred_frm[b], real_frm[b], full=True, multichannel=True)
+                score, _ = compare_ssim(pred_frm[b], real_frm[b], full=True, multichannel=True, channel_axis=-1)
                 ssim[i] += score
 
         # save prediction examples

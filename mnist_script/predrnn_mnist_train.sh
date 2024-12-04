@@ -27,5 +27,5 @@ python -u run.py \
     --batch_size 8 \
     --max_iterations 80000 \
     --display_interval 100 \
-    --test_interval 5000 \
-    --snapshot_interval 5000
+    --test_interval 100 \
+    --snapshot_interval 100\
