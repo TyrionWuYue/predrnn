@@ -4,8 +4,8 @@ python -u run.py \
     --is_training 1 \
     --device cuda \
     --dataset_name mnist \
-    --train_data_paths /workspace/wuhaixu/predrnn/data/moving-mnist-example/moving-mnist-train.npz \
-    --valid_data_paths /workspace/wuhaixu/predrnn/data/moving-mnist-example/moving-mnist-valid.npz \
+    --train_data_paths dataset/MMNIST/moving-mnist-train.npz \
+    --valid_data_paths dataset/MMNIST/moving-mnist-valid.npz \
     --save_dir checkpoints/mnist_predrnn \
     --gen_frm_dir results/mnist_predrnn \
     --model_name predrnn \
