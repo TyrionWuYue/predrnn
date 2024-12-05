@@ -9,12 +9,12 @@ python -u run_ode.py \
     --save_dir checkpoints/DDGODE \
     --gen_frm_dir results/DDGODE \
     --model_name DDGODE \
-    --reverse_input 0 \
+    --reverse_input 1 \
     --img_width 64 \
     --img_channel 1 \
     --input_length 10 \
     --total_length 20 \
-    --num_hidden 64,64,64 \
+    --num_hidden 256,256 \
     --patch_size 2 \
     --layer_norm 0 \
     --decouple_beta 0.1 \
@@ -22,10 +22,10 @@ python -u run_ode.py \
     --r_sampling_step_1 25000 \
     --r_sampling_step_2 50000 \
     --r_exp_alpha 2500 \
-    --lr 0.0001 \
+    --lr 0.0002 \
     --batch_size 8 \
     --max_iterations 80000 \
     --display_interval 100 \
-    --test_interval 5000 \
-    --snapshot_interval 5000 \
+    --test_interval 500 \
+    --snapshot_interval 500 \
 #    --pretrained_model ./checkpoints/mnist_predrnn_v2/mnist_model.ckpt

@@ -72,6 +72,7 @@ parser.add_argument('--res_on_conv', type=int, default=0, help='res on conv')
 parser.add_argument('--num_action_ch', type=int, default=4, help='num action ch')
 
 args = parser.parse_args()
+args.num_hidden = [int(x) for x in args.num_hidden.split(',')]
 print(args)
 
 # Auto Select Device

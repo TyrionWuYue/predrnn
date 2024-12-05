@@ -87,7 +87,7 @@ class RNN(nn.Module):
         next_frames = torch.stack(next_frames, dim=0).permute(1, 0, 3, 4, 2).contiguous()
         loss = self.MSE_criterion(next_frames, frames_tensor[:, 1:])
 
+        ode_loss = self.MSE_criterion(ode_down_frames, frames_down[:, -(self.configs.total_length - self.configs.input_length):])
+        loss  = loss + ode_loss
+
         return next_frames, loss
-            
-        
-        
