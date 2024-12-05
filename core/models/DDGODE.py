@@ -79,7 +79,6 @@ class RNN(nn.Module):
             frames_up = self.up(z_gen, future_frames[:, t])
             x_gen = self.conv_last(frames_up)
             next_frames.append(x_gen)
-            print("t: ", t)
         
         # [length, batch, channel, height, width] -> [batch, length, height, width, channel]
         next_frames = torch.stack(next_frames, dim=0).permute(1, 0, 3, 4, 2).contiguous()

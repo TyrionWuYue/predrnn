@@ -4,10 +4,7 @@ import cv2
 import numpy as np
 from skimage.metrics import structural_similarity as compare_ssim
 from core.utils import preprocess, metrics
-# import lpips
 import torch
-
-# loss_fn_alex = lpips.LPIPS(net='alex')
 
 
 def train(model, ims, real_input_flag, configs, itr):
@@ -95,8 +92,6 @@ def test(model, test_input_handle, configs, itr):
                 img_gx[:, 1, :, :] = gx[:, :, :, 0]
                 img_gx[:, 2, :, :] = gx[:, :, :, 0]
             img_gx = torch.FloatTensor(img_gx)
-            # lp_loss = loss_fn_alex(img_x, img_gx)
-            # lp[i] += torch.mean(lp_loss).item()
 
             real_frm = np.uint8(x * 255)
             pred_frm = np.uint8(gx * 255)
@@ -139,8 +134,3 @@ def test(model, test_input_handle, configs, itr):
     print('psnr per frame: ' + str(np.mean(psnr)))
     for i in range(configs.total_length - configs.input_length):
         print(psnr[i])
-
-    # lp = np.asarray(lp, dtype=np.float32) / batch_id
-    # print('lpips per frame: ' + str(np.mean(lp)))
-    # for i in range(configs.total_length - configs.input_length):
-    #     print(lp[i])
