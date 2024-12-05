@@ -33,9 +33,7 @@ parser.add_argument('--img_channel', type=int, default=1)
 parser.add_argument('--model_name', type=str, default='predrnn')
 parser.add_argument('--pretrained_model', type=str, default='')
 parser.add_argument('--num_hidden', type=str, default='64,64,64,64')
-parser.add_argument('--filter_size', type=int, default=5)
-parser.add_argument('--stride', type=int, default=1)
-parser.add_argument('--patch_size', type=int, default=4)
+parser.add_argument('--patch_size', type=int, default=2)
 parser.add_argument('--layer_norm', type=int, default=1)
 parser.add_argument('--decouple_beta', type=float, default=0.1)
 
@@ -100,12 +98,12 @@ def reserve_schedule_sampling_exp(itr):
         (args.batch_size, args.total_length - args.input_length - 1))
     true_token = (random_flip < eta)
 
-    ones = np.ones((args.img_width // args.patch_size,
-                    args.img_width // args.patch_size,
-                    args.patch_size ** 2 * args.img_channel))
-    zeros = np.zeros((args.img_width // args.patch_size,
-                      args.img_width // args.patch_size,
-                      args.patch_size ** 2 * args.img_channel))
+    ones = np.ones((args.img_width // (args.patch_size * 2),
+                    args.img_width // (args.patch_size * 2),
+                    int(args.num_hidden[0])))
+    zeros = np.zeros((args.img_width // (args.patch_size * 2),
+                      args.img_width // (args.patch_size * 2),
+                      int(args.num_hidden[0])))
 
     real_input_flag = []
     for i in range(args.batch_size):
@@ -125,9 +123,9 @@ def reserve_schedule_sampling_exp(itr):
     real_input_flag = np.reshape(real_input_flag,
                                  (args.batch_size,
                                   args.total_length - 2,
-                                  args.img_width // args.patch_size,
-                                  args.img_width // args.patch_size,
-                                  args.patch_size ** 2 * args.img_channel))
+                                  args.img_width // (args.patch_size * 2),
+                                  args.img_width // (args.patch_size * 2),
+                                  int(args.num_hidden[0])))
     return real_input_flag
 
 
