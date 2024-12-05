@@ -21,13 +21,13 @@ class RNN(nn.Module):
 
         self.init_conv = DoubleConv(self.frame_channel, num_hidden[0])
         self.down = DownSample(in_channels=num_hidden[0], out_channels=num_hidden[0])
-        self.up = UpSample(in_channels=num_hidden[num_layers - 1]*2, out_channels=num_hidden[num_layers - 1], h=self.width//2, w=self.width//2)
+        self.up = UpSample(in_channels=num_hidden[0], out_channels=num_hidden[0], h=self.width//2, w=self.width//2)
         for i in range(num_layers):
             cell_list.append(
                 DyGCRNCell(node_num=self.node_num, dim_in=num_hidden[i-1], hidden_dim=num_hidden[i], cheb_k=2, mem_num=32, embed_dim=10)
             )
         self.cell_list = nn.ModuleList(cell_list)
-        self.odeblock = ODEBlock(num_hidden[0], 128, self.configs.total_length - 1)
+        self.odeblock = ODEBlock(num_hidden[0], 128, self.configs.total_length - self.configs.input_length)
         self.conv_h2z = nn.Conv2d(num_hidden[num_layers-1], num_hidden[0], kernel_size=1, stride=1, padding=0, bias=False)
         self.conv_last = nn.Conv2d(num_hidden[0], self.frame_channel,
                                    kernel_size=1, stride=1, padding=0, bias=False)
@@ -51,10 +51,10 @@ class RNN(nn.Module):
         frames_down = frames_down.view(batch, -1, self.num_hidden[0], height//2, width//2)
         frames = frames.view(batch, -1, self.num_hidden[0], height, width)
 
-        first_frame = frames[:, 0, ...].reshape(batch, -1, self.num_hidden[0])
-        future_frames = self.odeblock(first_frame)
-        future_frames = future_frames.view(batch, -1, self.num_hidden[0], height, width)
-        assert future_frames.shape[1] == self.configs.total_length - 1
+        last_down_frame = frames_down[:, self.configs.input_length - 1, ...].reshape(batch, -1, height//2, width//2)
+        future_down_frames = self.odeblock(last_down_frame)
+        ode_down_frames = future_down_frames.view(batch, -1, self.num_hidden[0], height//2, width//2)
+        assert ode_down_frames.shape[1] == self.configs.total_length - self.configs.input_length
 
         for i in range(self.num_layers):
             zeros = torch.zeros([batch, self.num_hidden[i], height//2, width//2]).to(self.configs.device)
@@ -66,7 +66,10 @@ class RNN(nn.Module):
                 if t == 0:
                     net = frames_down[:, t]
                 else:
-                    net = mask_true[:, t - 1] * frames_down[:, t] + (1 - mask_true[:, t - 1]) * z_gen
+                    if t < self.configs.input_length - 2:
+                        net = frames_down[:, t]
+                    else:
+                        net = mask_true[:, t - 1] * frames_down[:, t] + (1 - mask_true[:, t - 1]) * ode_down_frames[:, t - self.configs.input_length + 1]
             else:
                 if t < self.configs.input_length:
                     net = frames_down[:, t]
@@ -76,15 +79,14 @@ class RNN(nn.Module):
             for i in range(self.num_layers):
                 h_t[i] = self.cell_list[i](net, h_t[i])
             z_gen = self.conv_h2z(h_t[-1])
-            frames_up = self.up(z_gen, future_frames[:, t])
+            frames_up = self.up(z_gen)
             x_gen = self.conv_last(frames_up)
             next_frames.append(x_gen)
         
         # [length, batch, channel, height, width] -> [batch, length, height, width, channel]
         next_frames = torch.stack(next_frames, dim=0).permute(1, 0, 3, 4, 2).contiguous()
         loss = self.MSE_criterion(next_frames, frames_tensor[:, 1:])
-        z_loss = self.MSE_criterion(future_frames, frames[:, 1:])
-        loss += z_loss
+
         return next_frames, loss
             
         

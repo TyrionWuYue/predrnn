@@ -1,6 +1,8 @@
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
+import numpy as np
+from core.layers.ConvLayers import DoubleConv
 
 
 class GatedFusion(nn.Module):
@@ -36,6 +38,21 @@ class GatedFusion(nn.Module):
         return res
 
 
+class ConditionalPositionalEncoding(nn.Module):
+    def __init__(self, in_channels, kernel_size):
+        super(ConditionalPositionalEncoding, self).__init__()
+        self.pe = nn.Conv2d(in_channels, in_channels, kernel_size, padding=kernel_size//2, bias=True, groups=in_channels)
+
+    def forward(self, x):
+        batch_size = x.shape[0]
+        num_node = x.shape[1]
+        w = d = int(np.sqrt(num_node))
+        x = x.reshape(batch_size, -1, w, d)
+        x = x + self.pe(x)
+        x = x.reshape(batch_size, num_node, -1)
+        return x
+
+
 class DynAGCN(nn.Module):
     def __init__(self, dim_in, dim_out, cheb_k, embed_dim):
         super(DynAGCN, self).__init__()
@@ -43,6 +60,8 @@ class DynAGCN(nn.Module):
         self.embed_dim = embed_dim
         self.dim_in = dim_in
         self.dim_out = dim_out
+
+        self.pe = ConditionalPositionalEncoding(dim_in, kernel_size=5)
 
         # Dynamic Graph Embedding
         self.fc = nn.Sequential(
@@ -65,6 +84,7 @@ class DynAGCN(nn.Module):
         batch_size, num_nodes, _ = x.shape
         stc_E = node_embeddings
 
+        x = self.pe(x)
         x_e = self.fc(x)
         query = torch.einsum('bnd,de->bne', x_e, self.Wq)
         att_score = F.softmax(torch.matmul(query, Mem.transpose(0, 1)), dim=-1)
@@ -90,6 +110,16 @@ class DyGCRNCell(nn.Module):
         super(DyGCRNCell, self).__init__()
         self.node_num = node_num
         self.hidden_dim = hidden_dim
+
+        self.conv = DoubleConv(dim_in, dim_in)
+        self.ffn = nn.Sequential(
+            nn.Conv2d(dim_in, dim_in*4, kernel_size=1, stride=1, padding=0),
+            nn.BatchNorm2d(dim_in*4),
+            nn.GELU(),
+            nn.Conv2d(dim_in*4, hidden_dim, kernel_size=1, stride=1, padding=0),
+            nn.BatchNorm2d(hidden_dim)
+        )
+
         # Memory
         self.Mem = nn.Parameter(torch.randn(mem_num, embed_dim), requires_grad=True)
         # Static Graph Embedding
@@ -101,6 +131,8 @@ class DyGCRNCell(nn.Module):
         self.update = DynAGCN(dim_in+self.hidden_dim, self.hidden_dim, cheb_k, embed_dim)
 
     def forward(self, x, state):
+        x = self.conv(x)
+        x = self.ffn(x)
         assert x.shape[-2:] == state.shape[-2:]
         assert x.shape[-2] * x.shape[-1] == self.node_num
         batch_size = x.shape[0]

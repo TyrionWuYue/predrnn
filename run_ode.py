@@ -70,6 +70,7 @@ parser.add_argument('--res_on_conv', type=int, default=0, help='res on conv')
 parser.add_argument('--num_action_ch', type=int, default=4, help='num action ch')
 
 args = parser.parse_args()
+args.num_hidden = [int(x) for x in args.num_hidden.split(',')]
 print(args)
 
 # Auto Select Device
@@ -97,7 +98,7 @@ def reserve_schedule_sampling_exp(itr):
     random_flip = np.random.random_sample(
         (args.batch_size, args.total_length - args.input_length - 1))
     true_token = (random_flip < eta)
-
+    
     ones = np.ones((args.img_width // (args.patch_size * 2),
                     args.img_width // (args.patch_size * 2),
                     int(args.num_hidden[0])))

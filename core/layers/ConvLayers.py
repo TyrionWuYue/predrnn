@@ -48,13 +48,12 @@ class UpSample(nn.Module):
         self.h = h
         self.w = w
 
-    def forward(self, x1, x2):
-        batch_size = x1.size()[0]
-        x1 = x1.reshape(batch_size, -1, self.h, self.w)
-        x2 = x2.reshape(batch_size, -1, self.h*2, self.w*2)
-        assert x1.size()[-1]*2 == x2.size()[-1]
-        x = torch.cat([x2, self.up(x1)], dim=1)
-        return self.conv(x)
+    def forward(self, x):
+        batch_size = x.size()[0]
+        x = x.reshape(batch_size, -1, self.h, self.w)
+        x = self.up(x)
+        x = self.conv(x)
+        return x
 
 
 class OutConv(nn.Module):

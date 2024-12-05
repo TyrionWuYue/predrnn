@@ -6,7 +6,7 @@ from core.models import predrnn, predrnn_v2, action_cond_predrnn, action_cond_pr
 class Model(object):
     def __init__(self, configs):
         self.configs = configs
-        self.num_hidden = [int(x) for x in configs.num_hidden.split(',')]
+        self.num_hidden = configs.num_hidden
         self.num_layers = len(self.num_hidden)
         networks_map = {
             'predrnn': predrnn.RNN,

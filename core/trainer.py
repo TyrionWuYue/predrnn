@@ -41,12 +41,20 @@ def test(model, test_input_handle, configs, itr):
     else:
         mask_input = configs.input_length
 
-    real_input_flag = np.zeros(
+    if configs.model_name == 'DDGODE':
+        real_input_flag = np.zeros(
+            (configs.batch_size,
+            configs.total_length - mask_input - 1,
+            configs.img_width // (configs.patch_size * 2),
+            configs.img_width // (configs.patch_size * 2),
+            int(configs.num_hidden[0])))
+    else:
+        real_input_flag = np.zeros(
         (configs.batch_size,
          configs.total_length - mask_input - 1,
-         configs.img_width // (configs.patch_size * 2),
-         configs.img_width // (configs.patch_size * 2),
-         int(configs.num_hidden[0])))
+         configs.img_width // configs.patch_size,
+         configs.img_width // configs.patch_size,
+         configs.patch_size ** 2 * configs.img_channel))
 
     if configs.reverse_scheduled_sampling == 1:
         real_input_flag[:, :configs.input_length - 1, :, :] = 1.0
