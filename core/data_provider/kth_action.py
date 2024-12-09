@@ -184,8 +184,8 @@ class DataProcess:
             seq_start_idx = seq_end_idx - self.seq_len + 1
             if frames_person_mark[seq_end_idx] == frames_person_mark[seq_start_idx]:
                 # Get person ID at the start and end of this sequence (of seq_len)
-                end = int(frames_file_name[seq_end_idx][6:10])
-                start = int(frames_file_name[seq_start_idx][6:10])
+                end = int(float(frames_file_name[seq_end_idx][6:10]))
+                start = int(float(frames_file_name[seq_start_idx][6:10]))
                 
                 # TODO: mode == 'test'
                 if end - start == self.seq_len - 1:
